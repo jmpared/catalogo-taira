@@ -10,7 +10,7 @@ st.write("Seleccioná los productos que necesitás y armá tu pedido.")
 @st.cache_data
 def cargar_datos():
     try:
-        df = pd.read_excel("Base_Catalogo_Pedidos.xlsx")
+        df = pd.read_excel("Productos taira.xlsx")
         return df
     except FileNotFoundError:
         st.error("No se encontró el archivo Base_Catalogo_Pedidos.xlsx")
