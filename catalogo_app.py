@@ -9,19 +9,12 @@ st.write("Seleccioná los productos que necesitás y armá tu pedido.")
 
 @st.cache_data
 def cargar_datos():
-    archivos_posibles = ["Productos taira.xlsx", "Base_Catalogo_Pedidos.xlsx"]
-    for archivo in archivos_posibles:
-        try:
-            df = pd.read_excel(archivo)
-            # --- LIMPIEZA DE FILAS VACÍAS ---
-            # Borra las filas donde la columna 'Producto' está vacía
-            if 'Producto' in df.columns:
-                df = df.dropna(subset=['Producto'])
-            return df
-        except FileNotFoundError:
-            continue
-    st.error("No se encontró el archivo Excel en GitHub.")
-    return pd.DataFrame()
+    try:
+        df = pd.read_excel("Base_Catalogo_Pedidos.xlsx")
+        return df
+    except FileNotFoundError:
+        st.error("No se encontró el archivo Base_Catalogo_Pedidos.xlsx")
+        return pd.DataFrame()
 
 df = cargar_datos()
 
@@ -35,51 +28,32 @@ if not df.empty:
         col_img, col_info = st.columns([1, 2])
         
         with col_img:
-            if 'Imagen_URL' in df.columns and pd.notna(row.get('Imagen_URL')):
-                st.image(str(row['Imagen_URL']), use_container_width=True)
+            if pd.notna(row['Imagen_URL']):
+                st.image(row['Imagen_URL'], use_container_width=True)
             else:
                 st.write("📷 Sin foto")
                 
         with col_info:
-            producto_nombre = str(row.get('Producto', f'Producto {index}'))
-            st.subheader(producto_nombre)
-            
-            desc = str(row.get('descripcion', ''))
-            largo = str(row.get('Largo', ''))
-            promo = str(row.get('Precio PROMO 10+2 / 5+1', ''))
-            
-            detalles = []
-            if desc and desc != 'nan': detalles.append(desc)
-            if largo and largo != 'nan': detalles.append(f"Largo: {largo}")
-            if promo and promo != 'nan': detalles.append(f"Promo: {promo}")
-            
-            if detalles:
-                st.caption(" | ".join(detalles))
-            
-            precio_raw = row.get('precio por unidada', 0)
-            try:
-                precio = float(precio_raw)
-            except:
-                precio = 0.0
-                
-            st.write(f"**Precio unitario:** ${precio:,.2f}")
+            st.subheader(row['Producto'])
+            st.caption(row['Descripción'])
+            st.write(f"**Precio:** ${row['Precio Final']:,.2f}")
             
             cantidad = st.number_input(
-                f"Cantidad", 
+                f"Cantidad de {row['Producto']}", 
                 min_value=0, 
                 max_value=100, 
                 step=1, 
-                key=f"cant_{index}"
+                key=f"cant_{row['ID']}"
             )
             
             if cantidad > 0:
-                st.session_state.carrito[producto_nombre] = {
+                st.session_state.carrito[row['Producto']] = {
                     'cantidad': cantidad,
-                    'precio': precio,
-                    'subtotal': cantidad * precio
+                    'precio': row['Precio Final'],
+                    'subtotal': cantidad * row['Precio Final']
                 }
-            elif producto_nombre in st.session_state.carrito:
-                del st.session_state.carrito[producto_nombre]
+            elif row['Producto'] in st.session_state.carrito:
+                del st.session_state.carrito[row['Producto']]
         
         st.divider()
 
