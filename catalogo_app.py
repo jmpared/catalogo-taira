@@ -9,11 +9,14 @@ st.write("Seleccioná los productos que necesitás y armá tu pedido.")
 
 @st.cache_data
 def cargar_datos():
-    # Busca ambos nombres posibles para evitar errores de archivo no encontrado
     archivos_posibles = ["Productos taira.xlsx", "Base_Catalogo_Pedidos.xlsx"]
     for archivo in archivos_posibles:
         try:
             df = pd.read_excel(archivo)
+            # --- LIMPIEZA DE FILAS VACÍAS ---
+            # Borra las filas donde la columna 'Producto' está vacía
+            if 'Producto' in df.columns:
+                df = df.dropna(subset=['Producto'])
             return df
         except FileNotFoundError:
             continue
@@ -32,18 +35,15 @@ if not df.empty:
         col_img, col_info = st.columns([1, 2])
         
         with col_img:
-            # Revisa si la columna Imagen_URL existe antes de intentar mostrarla
             if 'Imagen_URL' in df.columns and pd.notna(row.get('Imagen_URL')):
-                st.image(row['Imagen_URL'], use_container_width=True)
+                st.image(str(row['Imagen_URL']), use_container_width=True)
             else:
                 st.write("📷 Sin foto")
                 
         with col_info:
-            # Mapeamos los nombres EXACTOS de tus columnas según la captura
-            producto_nombre = row.get('Producto', f'Producto {index}')
+            producto_nombre = str(row.get('Producto', f'Producto {index}'))
             st.subheader(producto_nombre)
             
-            # Unimos las descripciones extra
             desc = str(row.get('descripcion', ''))
             largo = str(row.get('Largo', ''))
             promo = str(row.get('Precio PROMO 10+2 / 5+1', ''))
@@ -56,10 +56,9 @@ if not df.empty:
             if detalles:
                 st.caption(" | ".join(detalles))
             
-            # Precio unitario (respetando como lo escribiste en tu Excel)
-            precio = row.get('precio por unidada', 0)
+            precio_raw = row.get('precio por unidada', 0)
             try:
-                precio = float(precio)
+                precio = float(precio_raw)
             except:
                 precio = 0.0
                 
